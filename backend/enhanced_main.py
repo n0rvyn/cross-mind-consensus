@@ -83,7 +83,10 @@ limiter = Limiter(key_func=get_remote_address)
 # FastAPI app initialization
 app = FastAPI(
     title="Enhanced Cross-Mind Consensus API",
-    description="Advanced multi-LLM consensus and verification system with caching, analytics, and real-time features",
+    description=(
+        "Advanced multi-LLM consensus and verification system with caching, "
+        "analytics, and real-time features"
+    ),
     version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -255,7 +258,10 @@ async def call_llm(model_id: str, prompt: str) -> str:
 
                 # Call ERNIE API
                 ernie_resp = await client.post(
-                    f"https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions",
+                    (
+                        "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/"
+                        "wenxinworkshop/chat/completions"
+                    ),
                     params={"access_token": conf["access_token"]},
                     json={"messages": [{"role": "user", "content": prompt}]},
                     timeout=30,
@@ -537,12 +543,18 @@ async def multi_llm_qa(
             for i in range(req.chain_depth):
                 critic_idx = (i + 1) % len(req.model_ids)
                 critic_id = req.model_ids[critic_idx]
-                critic_prompt = f"你是批评者，请针对下述回答进行严肃批评与完善建议：\n\n回答：{prev_answer}"
+                critic_prompt = (
+                    f"你是批评者，请针对下述回答进行严肃批评与完善建议："
+                    f"\n\n回答：{prev_answer}"
+                )
                 critic_content = await call_llm(critic_id, critic_prompt)
 
                 reviser_idx = (i + 2) % len(req.model_ids)
                 reviser_id = req.model_ids[reviser_idx]
-                reviser_prompt = f"你是修正者，请根据以下批评意见优化原回答，使其更科学准确。\n原回答：{prev_answer}\n批评：{critic_content}"
+                reviser_prompt = (
+                    f"你是修正者，请根据以下批评意见优化原回答，使其更科学准确。"
+                    f"\n原回答：{prev_answer}\n批评：{critic_content}"
+                )
                 revised_answer = await call_llm(reviser_id, reviser_prompt)
 
                 chain_answers.append(

@@ -5,7 +5,6 @@ Provides easy configuration and deployment options
 """
 
 import argparse
-import os
 import signal
 import subprocess
 import sys

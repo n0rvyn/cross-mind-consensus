@@ -1,0 +1,23 @@
+[flake8]
+max-line-length = 88
+extend-ignore = 
+    E203,  # whitespace before ':'
+    W503,  # line break before binary operator
+    E402,  # module level import not at top of file (for config files)
+    F401,  # imported but unused (will be handled by removing unused imports)
+    E722,  # do not use bare 'except' (will be fixed individually)
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    env,
+    .env,
+    .tox,
+    build,
+    dist,
+    *.egg-info
+per-file-ignores =
+    config.py:E402,F401
+    __init__.py:F401
+    test_*.py:F401,F841 

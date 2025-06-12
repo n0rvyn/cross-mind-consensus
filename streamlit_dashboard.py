@@ -36,8 +36,8 @@ try:
             st.metric("System Status", health_data.get("status", "Unknown"))
     else:
         st.error("🔴 System Offline")
-except:
-    st.error("🔴 Cannot connect to API")
+except Exception as e:
+    st.error(f"🔴 Cannot connect to API: {e}")
 
 # Query interface
 st.header("🔍 Submit Query")
@@ -85,5 +85,5 @@ try:
             )
         with col3:
             st.metric("Success Rate", f"{analytics_data.get('success_rate', 0):.1f}%")
-except:
-    st.info("Analytics data not available")
+except Exception as e:
+    st.info(f"Analytics data not available: {e}")

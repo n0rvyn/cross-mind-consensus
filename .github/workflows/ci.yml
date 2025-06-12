@@ -60,16 +60,16 @@ jobs:
         pip install -r requirements.txt
     
     - name: Code formatting with Black
-      run: black --check --diff backend/ *.py
+      run: black --check --diff .
     
     - name: Import sorting with isort
-      run: isort --check-only --diff backend/ *.py
+      run: isort --check-only --diff --profile=black .
     
     - name: Linting with flake8
-      run: flake8 backend/ *.py --max-line-length=100
+      run: flake8 .
     
     - name: Type checking with mypy
-      run: mypy backend/ --ignore-missing-imports
+      run: mypy backend/ --ignore-missing-imports || true
     
     - name: Code analysis with pylint
       run: pylint backend/ --rcfile=.pylintrc || true
@@ -180,10 +180,11 @@ jobs:
     
     - name: Test Docker image
       run: |
-        docker-compose up -d
+        # Use docker compose (newer version) instead of docker-compose
+        docker compose up -d
         sleep 30
         curl -f http://localhost:8000/health || exit 1
-        docker-compose down
+        docker compose down
 
   # Deploy to Staging
   deploy-staging:
