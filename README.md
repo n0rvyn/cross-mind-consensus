@@ -221,7 +221,7 @@ cross-mind-consensus/
 2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
 3. 提交更改 (`git commit -m 'Add AmazingFeature'`)
 4. 推送分支 (`git push origin feature/AmazingFeature`)
-5. 创建Pull Request
+5. 创建 Pull Request
 
 ## 📄 许可证
 
@@ -229,9 +229,9 @@ cross-mind-consensus/
 
 ## 🙋‍♂️ 支持与联系
 
-- 📧 邮箱: your-email@example.com
-- 🐛 问题反馈: [GitHub Issues](https://github.com/your-username/cross-mind-consensus/issues)
-- 📖 文档: [项目Wiki](https://github.com/your-username/cross-mind-consensus/wiki)
+- 📧 邮箱: norvyn@norvyn.com
+- 🐛 问题反馈: [GitHub Issues](https://github.com/n0rvyn/cross-mind-consensus/issues)
+- 📖 文档: [项目Wiki](https://github.com/n0rvyn/cross-mind-consensus/wiki)
 
 ## 🎉 致谢
 

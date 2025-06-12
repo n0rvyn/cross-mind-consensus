@@ -1,8 +1,9 @@
-import streamlit as st
-import requests
 import json
 from datetime import datetime
+
 import pandas as pd
+import requests
+import streamlit as st
 
 st.set_page_config(page_title="Cross-Mind Consensus Dashboard", layout="wide")
 
@@ -20,12 +21,17 @@ try:
     if response.status_code == 200:
         health_data = response.json()
         st.success("🟢 System Online")
-        
+
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("Cache Status", "Active" if health_data.get("cache", {}).get("enabled") else "Inactive")
+            st.metric(
+                "Cache Status",
+                "Active" if health_data.get("cache", {}).get("enabled") else "Inactive",
+            )
         with col2:
-            st.metric("WebSocket Connections", health_data.get("websocket_connections", 0))
+            st.metric(
+                "WebSocket Connections", health_data.get("websocket_connections", 0)
+            )
         with col3:
             st.metric("System Status", health_data.get("status", "Unknown"))
     else:
@@ -39,18 +45,20 @@ with st.form("query_form"):
     question = st.text_area("Question")
     model_ids = st.multiselect("Models", ["openai_gpt4", "anthropic_claude", "zhipu"])
     roles = st.text_input("Roles (comma-separated)", "Expert,Reviewer")
-    
+
     if st.form_submit_button("Submit"):
         if question and model_ids:
             payload = {
                 "question": question,
                 "roles": roles.split(","),
                 "model_ids": model_ids,
-                "method": "agreement"
+                "method": "agreement",
             }
-            
+
             try:
-                response = requests.post(f"{API_URL}/llm/qa", json=payload, headers=headers)
+                response = requests.post(
+                    f"{API_URL}/llm/qa", json=payload, headers=headers
+                )
                 if response.status_code == 200:
                     result = response.json()
                     st.success("Query completed!")
@@ -66,13 +74,16 @@ try:
     analytics_response = requests.get(f"{API_URL}/analytics/summary", headers=headers)
     if analytics_response.status_code == 200:
         analytics_data = analytics_response.json()
-        
+
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Total Queries", analytics_data.get("total_queries", 0))
         with col2:
-            st.metric("Avg Consensus Score", f"{analytics_data.get('avg_consensus_score', 0):.3f}")
+            st.metric(
+                "Avg Consensus Score",
+                f"{analytics_data.get('avg_consensus_score', 0):.3f}",
+            )
         with col3:
             st.metric("Success Rate", f"{analytics_data.get('success_rate', 0):.1f}%")
 except:
-    st.info("Analytics data not available") 
+    st.info("Analytics data not available")

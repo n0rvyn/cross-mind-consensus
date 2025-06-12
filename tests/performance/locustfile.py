@@ -2,23 +2,24 @@
 Performance Testing for Cross-Mind Consensus API using Locust
 """
 
-from locust import HttpUser, task, between
 import json
 import random
+
+from locust import HttpUser, between, task
 
 
 class ConsensusAPIUser(HttpUser):
     """Simulated user for performance testing"""
-    
+
     wait_time = between(1, 3)  # Wait 1-3 seconds between requests
-    
+
     def on_start(self):
         """Called when a user starts"""
         # Check if API is healthy
         response = self.client.get("/health")
         if response.status_code != 200:
             print(f"Health check failed: {response.status_code}")
-    
+
     @task(3)
     def test_consensus_basic(self):
         """Test basic consensus endpoint (weight: 3)"""
@@ -32,23 +33,23 @@ class ConsensusAPIUser(HttpUser):
             "What are the best practices for software development?",
             "How can AI improve healthcare?",
             "What is the impact of automation on jobs?",
-            "Explain the concept of digital transformation"
+            "Explain the concept of digital transformation",
         ]
-        
+
         question = random.choice(questions)
-        
+
         payload = {
             "question": question,
             "method": "expert_roles",
             "max_models": 3,
-            "temperature": 0.7
+            "temperature": 0.7,
         }
-        
+
         with self.client.post(
             "/consensus",
             json=payload,
             headers={"Content-Type": "application/json"},
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 data = response.json()
@@ -60,26 +61,23 @@ class ConsensusAPIUser(HttpUser):
                 response.failure("Rate limited")
             else:
                 response.failure(f"HTTP {response.status_code}")
-    
+
     @task(1)
     def test_batch_consensus(self):
         """Test batch consensus endpoint (weight: 1)"""
         questions = [
             "What is Python programming?",
             "Explain data structures",
-            "What is agile methodology?"
+            "What is agile methodology?",
         ]
-        
-        payload = {
-            "questions": questions,
-            "method": "expert_roles"
-        }
-        
+
+        payload = {"questions": questions, "method": "expert_roles"}
+
         with self.client.post(
             "/consensus/batch",
             json=payload,
             headers={"Content-Type": "application/json"},
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 data = response.json()
@@ -89,7 +87,7 @@ class ConsensusAPIUser(HttpUser):
                     response.failure("Missing batch response fields")
             else:
                 response.failure(f"HTTP {response.status_code}")
-    
+
     @task(2)
     def test_models_endpoint(self):
         """Test models information endpoint (weight: 2)"""
@@ -102,7 +100,7 @@ class ConsensusAPIUser(HttpUser):
                     response.failure("Missing models data")
             else:
                 response.failure(f"HTTP {response.status_code}")
-    
+
     @task(1)
     def test_analytics_endpoint(self):
         """Test analytics endpoint (weight: 1)"""
@@ -115,7 +113,7 @@ class ConsensusAPIUser(HttpUser):
                     response.failure("Missing analytics data")
             else:
                 response.failure(f"HTTP {response.status_code}")
-    
+
     @task(4)
     def test_health_check(self):
         """Test health check endpoint (weight: 4)"""
@@ -132,27 +130,27 @@ class ConsensusAPIUser(HttpUser):
 
 class StressTestUser(HttpUser):
     """High-intensity stress test user"""
-    
+
     wait_time = between(0.1, 0.5)  # Very short wait times
-    
+
     @task
     def stress_consensus(self):
         """Rapid-fire consensus requests"""
         payload = {
             "question": "Quick test question",
             "method": "direct_consensus",
-            "max_models": 2
+            "max_models": 2,
         }
-        
+
         self.client.post("/consensus", json=payload)
 
 
 # Custom performance test scenarios
 class LongRunningTestUser(HttpUser):
     """Test long-running requests"""
-    
+
     wait_time = between(5, 10)
-    
+
     @task
     def complex_question(self):
         """Test with complex, long questions"""
@@ -162,12 +160,12 @@ class LongRunningTestUser(HttpUser):
         Discuss both positive and negative implications, provide specific examples, 
         and suggest policy recommendations for managing AI development responsibly.
         """
-        
+
         payload = {
             "question": complex_question,
             "method": "expert_roles",
             "max_models": 5,
-            "temperature": 0.8
+            "temperature": 0.8,
         }
-        
-        self.client.post("/consensus", json=payload) 
+
+        self.client.post("/consensus", json=payload)

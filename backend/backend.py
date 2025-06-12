@@ -10,7 +10,7 @@ payload = {
     "method": "agreement",
     "chain_depth": 2,
     "weights": [1, 1, 1],
-    "save_log": True
+    "save_log": True,
 }
 
 headers = {"Authorization": f"Bearer {BEARER_KEY}"}
