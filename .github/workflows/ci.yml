@@ -37,7 +37,7 @@ jobs:
       run: bandit -r backend/ -f json -o bandit-report.json || true
     
     - name: Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-reports
         path: "*-report.json"
@@ -118,7 +118,7 @@ jobs:
         pytest tests/ -v --cov=backend --cov-report=xml --cov-report=html
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
@@ -160,7 +160,7 @@ jobs:
         locust -f tests/performance/locustfile.py --headless -u 10 -r 2 -t 60s --host=http://localhost:8000
     
     - name: Upload performance results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: performance-reports
         path: "*.html"
@@ -190,7 +190,7 @@ jobs:
     if: github.ref == 'refs/heads/develop'
     needs: [security-scan, code-quality, test, performance-test, docker-build]
     runs-on: ubuntu-latest
-    environment: staging
+    # environment: staging  # Comment out until environment is created in GitHub repo settings
     
     steps:
     - uses: actions/checkout@v4
@@ -210,7 +210,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: [security-scan, code-quality, test, performance-test, docker-build]
     runs-on: ubuntu-latest
-    environment: production
+    # environment: production  # Comment out until environment is created in GitHub repo settings
     
     steps:
     - uses: actions/checkout@v4
@@ -226,12 +226,12 @@ jobs:
         # Add health check commands here
     
     - name: Create release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ github.run_number }}
-        release_name: Release v${{ github.run_number }}
+        name: Release v${{ github.run_number }}
         body: |
           Automated release from main branch
           
