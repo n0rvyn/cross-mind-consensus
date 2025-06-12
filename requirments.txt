@@ -1,3 +1,0 @@
-fastapi 
-uvicorn 
-openai requests pydantic scikit-learn sentence-transformers
