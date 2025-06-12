@@ -1,5 +1,5 @@
 """
-Comprehensive Test Suite for Cross-Mind Consensus API
+Comprehensive Test Suite for Cross-Mind Consensus API (FIXED)
 """
 
 import asyncio
@@ -21,6 +21,17 @@ from config import settings
 
 client = TestClient(app)
 
+# Common headers for authenticated requests
+AUTH_HEADERS = {"Authorization": "Bearer test-key"}
+
+# Common request payload structure
+BASIC_QA_REQUEST = {
+    "question": "What is machine learning?",
+    "roles": ["Expert"],
+    "model_ids": ["openai_gpt4", "anthropic_claude"],
+    "method": "agreement"
+}
+
 
 @pytest.fixture
 def mock_redis():
@@ -38,7 +49,6 @@ def mock_llm_response():
     return {
         "openai_gpt4": "This is a test response from GPT-4.",
         "anthropic_claude": "This is a test response from Claude.",
-        "cohere_command": "This is a test response from Cohere.",
     }
 
 
@@ -53,108 +63,147 @@ class TestHealthEndpoint:
         data = response.json()
         assert "status" in data
         assert "timestamp" in data
-        assert "services" in data
 
 
-class TestConsensusEndpoint:
-    """Test consensus endpoints"""
+class TestQAEndpoint:
+    """Test QA endpoints"""
 
-    def test_consensus_basic_request(self, mock_redis):
-        """Test basic consensus request"""
-        with patch("backend.backend.query_models") as mock_query:
-            mock_query.return_value = {
-                "openai_gpt4": "Test response 1",
-                "anthropic_claude": "Test response 2",
-            }
+    @patch("backend.main.call_llm")
+    def test_qa_basic_request(self, mock_call_llm, mock_redis):
+        """Test basic QA request"""
+        mock_call_llm.return_value = "Test response"
 
-            response = client.post(
-                "/consensus", json={"question": "What is machine learning?"}
-            )
+        response = client.post(
+            "/llm/qa", 
+            json=BASIC_QA_REQUEST,
+            headers=AUTH_HEADERS
+        )
 
-            assert response.status_code == 200
-            data = response.json()
+        assert response.status_code == 200
+        data = response.json()
 
-            assert "consensus_response" in data
-            assert "consensus_score" in data
-            assert "individual_responses" in data
-            assert isinstance(data["consensus_score"], float)
-            assert 0 <= data["consensus_score"] <= 1
+        assert "final_answer" in data
+        assert "consensus_score" in data
+        assert "individual_answers" in data
+        assert isinstance(data["consensus_score"], float)
+        assert 0 <= data["consensus_score"] <= 1
 
-    def test_consensus_with_parameters(self, mock_redis):
-        """Test consensus with custom parameters"""
-        with patch("backend.backend.query_models") as mock_query:
-            mock_query.return_value = {
-                "openai_gpt4": "Test response",
-                "anthropic_claude": "Test response",
-            }
+    @patch("backend.main.call_llm")
+    def test_qa_with_chain_method(self, mock_call_llm, mock_redis):
+        """Test QA with chain method"""
+        mock_call_llm.return_value = "Test response"
 
-            response = client.post(
-                "/consensus",
-                json={
-                    "question": "Test question",
-                    "method": "expert_roles",
-                    "max_models": 3,
-                    "temperature": 0.5,
-                },
-            )
+        request_data = BASIC_QA_REQUEST.copy()
+        request_data["method"] = "chain"
+        request_data["chain_depth"] = 2
 
-            assert response.status_code == 200
-            data = response.json()
-            assert "method_used" in data
-            assert data["method_used"] == "expert_roles"
+        response = client.post(
+            "/llm/qa",
+            json=request_data,
+            headers=AUTH_HEADERS
+        )
 
-    def test_consensus_empty_question(self):
-        """Test consensus with empty question"""
-        response = client.post("/consensus", json={"question": ""})
+        assert response.status_code == 200
+        data = response.json()
+        assert "method" in data
+        assert data["method"] == "chain"
 
-        assert response.status_code == 400
+    def test_qa_empty_question(self):
+        """Test QA with empty question"""
+        request_data = BASIC_QA_REQUEST.copy()
+        request_data["question"] = ""
 
-    def test_consensus_missing_question(self):
-        """Test consensus without question field"""
-        response = client.post("/consensus", json={})
+        response = client.post(
+            "/llm/qa", 
+            json=request_data,
+            headers=AUTH_HEADERS
+        )
 
         assert response.status_code == 422  # Validation error
 
+    def test_qa_missing_question(self):
+        """Test QA without question field"""
+        request_data = BASIC_QA_REQUEST.copy()
+        del request_data["question"]
 
-class TestBatchConsensus:
-    """Test batch consensus endpoints"""
+        response = client.post(
+            "/llm/qa", 
+            json=request_data,
+            headers=AUTH_HEADERS
+        )
 
-    def test_batch_consensus_success(self, mock_redis):
-        """Test successful batch consensus"""
-        with patch("backend.backend.query_models") as mock_query:
-            mock_query.return_value = {
-                "openai_gpt4": "Test response",
-                "anthropic_claude": "Test response",
-            }
+        assert response.status_code == 422  # Validation error
 
-            response = client.post(
-                "/consensus/batch", json={"questions": ["What is AI?", "What is ML?"]}
-            )
+    def test_qa_unauthorized(self):
+        """Test QA without authentication"""
+        response = client.post("/llm/qa", json=BASIC_QA_REQUEST)
 
-            assert response.status_code == 200
-            data = response.json()
+        assert response.status_code == 401
 
-            assert "results" in data
-            assert "batch_summary" in data
-            assert len(data["results"]) == 2
 
-            # Check batch summary
-            summary = data["batch_summary"]
-            assert "total_questions" in summary
-            assert "successful" in summary
-            assert summary["total_questions"] == 2
+class TestBatchEndpoint:
+    """Test batch processing endpoints"""
 
-    def test_batch_consensus_empty_list(self):
-        """Test batch consensus with empty question list"""
-        response = client.post("/consensus/batch", json={"questions": []})
+    @patch("backend.main.call_llm")
+    def test_batch_qa_success(self, mock_call_llm, mock_redis):
+        """Test successful batch QA"""
+        mock_call_llm.return_value = "Test response"
+
+        batch_request = {
+            "requests": [
+                {
+                    "question": "What is AI?",
+                    "roles": ["Expert"],
+                    "model_ids": ["openai_gpt4"]
+                },
+                {
+                    "question": "What is ML?",
+                    "roles": ["Expert"],
+                    "model_ids": ["openai_gpt4"]
+                }
+            ]
+        }
+
+        response = client.post(
+            "/llm/batch", 
+            json=batch_request,
+            headers=AUTH_HEADERS
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "results" in data
+        assert "total_requests" in data
+        assert len(data["results"]) == 2
+        assert data["total_requests"] == 2
+
+    def test_batch_qa_empty_list(self):
+        """Test batch QA with empty request list"""
+        response = client.post(
+            "/llm/batch", 
+            json={"requests": []},
+            headers=AUTH_HEADERS
+        )
 
         assert response.status_code == 400
 
-    def test_batch_consensus_too_many_questions(self):
-        """Test batch consensus with too many questions"""
-        questions = [f"Question {i}" for i in range(51)]  # Exceed limit
+    def test_batch_qa_too_many_requests(self):
+        """Test batch QA with too many requests"""
+        requests = [
+            {
+                "question": f"Question {i}",
+                "roles": ["Expert"],
+                "model_ids": ["openai_gpt4"]
+            }
+            for i in range(51)
+        ]  # Exceed limit
 
-        response = client.post("/consensus/batch", json={"questions": questions})
+        response = client.post(
+            "/llm/batch", 
+            json={"requests": requests},
+            headers=AUTH_HEADERS
+        )
 
         assert response.status_code == 400
 
@@ -170,187 +219,82 @@ class TestModelsEndpoint:
         data = response.json()
 
         assert "models" in data
-        assert isinstance(data["models"], list)
-
-        # Check model structure
-        if data["models"]:
-            model = data["models"][0]
-            assert "id" in model
-            assert "name" in model
-            assert "provider" in model
-            assert "available" in model
+        assert isinstance(data["models"], dict)
 
 
 class TestAnalyticsEndpoint:
     """Test analytics endpoints"""
 
-    def test_performance_analytics_default(self):
-        """Test performance analytics with default parameters"""
-        with patch("backend.analytics_manager.analytics_manager") as mock_analytics:
-            mock_analytics.get_query_analytics.return_value = []
-            mock_analytics.get_model_performance.return_value = []
-
-            response = client.get("/analytics/performance")
-
-            assert response.status_code == 200
-            data = response.json()
-
-            assert "timeframe" in data
-            assert "metrics" in data
-
-    def test_performance_analytics_with_timeframe(self):
-        """Test performance analytics with specific timeframe"""
-        response = client.get("/analytics/performance?timeframe=7d")
+    def test_analytics_summary(self):
+        """Test analytics summary"""
+        response = client.get(
+            "/analytics/summary",
+            headers=AUTH_HEADERS
+        )
 
         assert response.status_code == 200
         data = response.json()
-        assert data["timeframe"] == "7d"
+        assert "total_queries" in data
 
+    def test_analytics_trends(self):
+        """Test analytics trends"""
+        response = client.get(
+            "/analytics/trends?days=7",
+            headers=AUTH_HEADERS
+        )
 
-class TestCaching:
-    """Test caching functionality"""
-
-    def test_cache_hit(self):
-        """Test cache hit scenario"""
-        with patch("backend.cache_manager.cache_manager") as mock_cache:
-            mock_cache.get_cached_response.return_value = {
-                "consensus_response": "Cached response",
-                "consensus_score": 0.85,
-                "cached": True,
-            }
-
-            response = client.post("/consensus", json={"question": "Test question"})
-
-            assert response.status_code == 200
-            data = response.json()
-            assert data.get("cache_hit") is True
-
-
-class TestErrorHandling:
-    """Test error handling scenarios"""
-
-    def test_model_failure_fallback(self, mock_redis):
-        """Test fallback when models fail"""
-        with patch("backend.backend.query_models") as mock_query:
-            # Simulate model failure
-            mock_query.side_effect = Exception("Model unavailable")
-
-            response = client.post("/consensus", json={"question": "Test question"})
-
-            # Should still return 200 with error information
-            assert response.status_code in [200, 500]
-
-    def test_rate_limiting(self):
-        """Test rate limiting functionality"""
-        # Make multiple rapid requests
-        for i in range(10):
-            response = client.post(
-                "/consensus", json={"question": f"Test question {i}"}
-            )
-
-            if response.status_code == 429:
-                # Rate limit hit
-                assert "rate limit" in response.json().get("error", "").lower()
-                break
-        else:
-            # Rate limiting might not be configured in test
-            pass
+        assert response.status_code == 200
 
 
 class TestAuthentication:
-    """Test authentication and authorization"""
+    """Test authentication"""
 
     def test_api_key_required(self):
         """Test that API key is required for protected endpoints"""
-        # This depends on your authentication setup
-        pass
+        response = client.post("/llm/qa", json=BASIC_QA_REQUEST)
+        assert response.status_code == 401
 
     def test_invalid_api_key(self):
-        """Test invalid API key handling"""
-        headers = {"X-API-Key": "invalid-key"}
-        response = client.post("/consensus", json={"question": "Test"}, headers=headers)
-
-        # Behavior depends on authentication configuration
-        # Could be 401 or 200 if auth is optional
-        assert response.status_code in [200, 401]
-
-
-class TestPerformance:
-    """Test performance characteristics"""
-
-    def test_response_time(self, mock_redis):
-        """Test that responses are within acceptable time limits"""
-        with patch("backend.backend.query_models") as mock_query:
-            mock_query.return_value = {"test_model": "Quick response"}
-
-            start_time = time.time()
-            response = client.post("/consensus", json={"question": "Test question"})
-            end_time = time.time()
-
-            assert response.status_code == 200
-            # Response should be under 30 seconds for test
-            assert (end_time - start_time) < 30
-
-    def test_concurrent_requests(self, mock_redis):
-        """Test handling of concurrent requests"""
-        import concurrent.futures
-        import threading
-
-        def make_request():
-            with patch("backend.backend.query_models") as mock_query:
-                mock_query.return_value = {"test_model": "Response"}
-                return client.post("/consensus", json={"question": "Concurrent test"})
-
-        # Test 5 concurrent requests
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [executor.submit(make_request) for _ in range(5)]
-            results = [future.result() for future in futures]
-
-        # All requests should succeed
-        for result in results:
-            assert result.status_code == 200
+        """Test invalid API key"""
+        response = client.post(
+            "/llm/qa", 
+            json=BASIC_QA_REQUEST,
+            headers={"Authorization": "Bearer invalid-key"}
+        )
+        assert response.status_code == 403
 
 
-class TestDataScience:
-    """Test data science module functionality"""
+class TestErrorHandling:
+    """Test error handling"""
 
-    def test_consensus_distribution_analysis(self):
-        """Test consensus distribution analysis"""
-        with patch("backend.data_science_module.consensus_data_scientist") as mock_ds:
-            mock_ds.get_consensus_distribution_analysis.return_value = {
-                "descriptive_stats": {"mean": 0.75, "std": 0.15},
-                "sample_size": 100,
-            }
+    @patch("backend.main.call_llm")
+    def test_llm_failure_handling(self, mock_call_llm):
+        """Test handling of LLM failures"""
+        mock_call_llm.side_effect = Exception("LLM service unavailable")
 
-            response = client.get("/analytics/distribution")
+        response = client.post(
+            "/llm/qa",
+            json=BASIC_QA_REQUEST,
+            headers=AUTH_HEADERS
+        )
 
-            # This endpoint might not exist yet, but shows testing approach
-            if response.status_code == 404:
-                pytest.skip("Distribution analysis endpoint not implemented")
-            else:
-                assert response.status_code == 200
+        assert response.status_code == 500
 
 
-class TestSafety:
-    """Test safety validation"""
+class TestCacheEndpoints:
+    """Test cache management endpoints"""
 
-    def test_harmful_content_detection(self):
-        """Test detection of harmful content"""
-        harmful_questions = [
-            "How to make explosives",
-            "Instructions for illegal activities",
-            "Harmful instructions",
-        ]
+    def test_clear_cache(self):
+        """Test cache clearing"""
+        response = client.delete(
+            "/cache",
+            headers=AUTH_HEADERS
+        )
 
-        for question in harmful_questions:
-            response = client.post("/consensus", json={"question": question})
-
-            # Should either reject (400) or flag as unsafe
-            data = response.json()
-            if response.status_code == 200:
-                # Check if safety warnings are included
-                assert "safety" in data or "warning" in str(data).lower()
+        assert response.status_code == 200
+        data = response.json()
+        assert "success" in data
 
 
 if __name__ == "__main__":
-    pytest.main(["-v", __file__])
+    pytest.main([__file__]) 

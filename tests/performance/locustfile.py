@@ -46,7 +46,7 @@ class ConsensusAPIUser(HttpUser):
         }
 
         with self.client.post(
-            "/consensus",
+            "/llm/qa",
             json=payload,
             headers={"Content-Type": "application/json"},
             catch_response=True,
@@ -74,7 +74,7 @@ class ConsensusAPIUser(HttpUser):
         payload = {"questions": questions, "method": "expert_roles"}
 
         with self.client.post(
-            "/consensus/batch",
+            "/llm/batch",
             json=payload,
             headers={"Content-Type": "application/json"},
             catch_response=True,
@@ -142,7 +142,7 @@ class StressTestUser(HttpUser):
             "max_models": 2,
         }
 
-        self.client.post("/consensus", json=payload)
+        self.client.post("/llm/qa", json=payload)
 
 
 # Custom performance test scenarios
@@ -168,4 +168,4 @@ class LongRunningTestUser(HttpUser):
             "temperature": 0.8,
         }
 
-        self.client.post("/consensus", json=payload)
+        self.client.post("/llm/qa", json=payload)
