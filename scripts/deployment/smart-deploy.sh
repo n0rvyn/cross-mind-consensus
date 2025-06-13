@@ -509,13 +509,52 @@ show_deployment_summary() {
     fi
 }
 
+# Load user configuration if available
+load_user_config() {
+    if [ -f "install-paths.conf" ]; then
+        print_step "Loading user configuration..."
+        source install-paths.conf
+        print_success "Loaded user-defined installation paths"
+        
+        # Override data directory detection if config exists
+        if [ -n "$DATA_DIR" ]; then
+            export DATA_DIR
+            print_info "Using configured data directory: $DATA_DIR"
+        fi
+        
+        if [ -n "$INSTALL_DIR" ]; then
+            export INSTALL_DIR
+            print_info "Using configured install directory: $INSTALL_DIR"
+        fi
+    fi
+}
+
 # Main execution
 main() {
     print_banner
     
+    # Check for --use-config flag
+    if [[ "$*" == *"--use-config"* ]]; then
+        load_user_config
+    fi
+    
     detect_environment
-    detect_data_directory
-    setup_working_directory
+    
+    # Skip data directory detection if config is loaded
+    if [ -z "$DATA_DIR" ]; then
+        detect_data_directory
+        setup_working_directory
+    else
+        print_step "Using configured paths, skipping auto-detection"
+        # Ensure we're in the right directory
+        if [ -n "$INSTALL_DIR" ] && [ "$INSTALL_DIR" != "$(pwd)" ]; then
+            if [ -d "$INSTALL_DIR" ]; then
+                cd "$INSTALL_DIR"
+                print_success "Changed to configured install directory: $(pwd)"
+            fi
+        fi
+    fi
+    
     detect_domain
     configure_domain
     check_prerequisites

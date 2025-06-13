@@ -1,371 +1,259 @@
-# 🤖 Cross-Mind Consensus System
+# 🤖 Cross-Mind Consensus
 
-**Enterprise-Grade Multi-LLM Consensus Platform**
+**Enterprise-grade Multi-LLM Consensus Platform** - 整合多个大语言模型的智能共识系统
 
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](Dockerfile)
-[![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](requirements.txt)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Security](https://img.shields.io/badge/Security-Enterprise--Grade-red.svg)](SECURITY_FIXES.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
 
-> **Transform AI decision-making with intelligent consensus from multiple large language models**
+## 🌟 项目特色
 
-## 🎯 What is Cross-Mind Consensus?
+Cross-Mind Consensus 是一个企业级的多LLM共识平台，通过整合多个顶级大语言模型的响应，提供更准确、更可靠的AI决策支持。
 
-Cross-Mind Consensus is an **enterprise-grade multi-LLM consensus system** that combines responses from multiple AI models (GPT-4, Claude, Cohere, Google Gemini, and more) to provide more accurate, reliable, and trustworthy AI decision support.
+### 🎯 核心功能
 
-### 🚀 Why Use Multi-LLM Consensus?
+- **多模型整合**: 支持 GPT-4, Claude, Cohere, Google Gemini, Baidu, Moonshot, Zhipu 等主流模型
+- **智能共识算法**: 先进的响应聚合和质量评估机制
+- **企业级架构**: FastAPI + Streamlit + Redis + Nginx + 监控系统
+- **完整监控**: Prometheus + Grafana 实时监控和告警
+- **容器化部署**: Docker Compose 一键部署
+- **SSL支持**: 自动HTTPS配置
+- **智能部署**: 环境自适应部署脚本
 
-- **🎯 Higher Accuracy**: Multiple AI perspectives reduce individual model biases
-- **🛡️ Better Reliability**: Consensus scoring identifies when models disagree
-- **💰 Cost Optimization**: Smart caching reduces API costs by 60-80%
-- **⚡ Performance**: Parallel processing delivers results 70% faster
-- **🔒 Enterprise Security**: Production-ready with authentication and monitoring
+## 📁 项目结构 (重构后)
 
-## ✨ Key Features
+```
+cross-mind-consensus/
+├── README.md                           # 项目说明
+├── LICENSE                            # 开源协议
+├── .env                               # 环境配置
+├── requirements.txt                   # Python依赖
+├── deploy.sh                          # 🚀 快速部署脚本
+├── health-check.sh                    # 🏥 健康检查脚本
+│
+├── src/                               # 📦 应用源代码
+│   ├── config.py                      # 配置模块
+│   ├── dashboard.py                   # 主仪表板
+│   ├── streamlit_dashboard.py         # Streamlit界面
+│   ├── run.py                        # 应用启动器
+│   └── test_system.py                # 系统测试
+│
+├── backend/                           # 🔧 后端API
+│   └── main.py                       # FastAPI应用
+│
+├── config/                           # ⚙️ 配置文件
+│   ├── docker/                       # Docker配置
+│   │   ├── docker-compose.yml        # 主要编排文件
+│   │   ├── docker-compose.simple.yml # 简化版本
+│   │   └── Dockerfile               # 镜像构建文件
+│   ├── monitoring/                   # 监控配置
+│   │   ├── prometheus.yml           # Prometheus配置
+│   │   └── grafana/                 # Grafana配置
+│   │       ├── dashboards/          # 仪表板定义
+│   │       └── datasources/         # 数据源配置
+│   │           └── prometheus.yml   # Grafana数据源
+│   ├── nginx/                       # Nginx配置
+│   │   └── nginx.conf              # 反向代理配置
+│   ├── gpt/                        # GPT相关配置
+│   │   ├── gpt_actions.yaml        # GPT Actions定义
+│   │   └── gpt_config/             # GPT配置文件
+│   ├── env.template                # 环境变量模板
+│   ├── production.env              # 生产环境配置
+│   └── demo-config.conf            # 演示配置
+│
+├── scripts/                          # 🛠️ 部署和管理脚本
+│   ├── deployment/                   # 部署脚本
+│   │   ├── auto-setup.sh            # 自动安装脚本
+│   │   ├── smart-deploy.sh          # 智能部署脚本
+│   │   ├── smart-uninstall.sh       # 卸载脚本
+│   │   ├── quick-setup.sh           # 快速安装
+│   │   └── install-config.sh        # 安装配置工具
+│   ├── ssl/                         # SSL脚本
+│   │   ├── generate-ssl.sh          # SSL证书生成
+│   │   └── setup-letsencrypt.sh     # Let's Encrypt配置
+│   └── utilities/                   # 工具脚本
+│       └── get-docker.sh           # Docker安装脚本
+│
+├── docs/                            # 📚 文档目录
+│   ├── deployment/                  # 部署文档
+│   │   ├── DEPLOYMENT.md           # 部署指南
+│   │   ├── INSTALLATION_PATHS.md   # 安装路径配置
+│   │   └── SERVER_REQUIREMENTS.md  # 服务器要求
+│   ├── development/                 # 开发文档
+│   ├── maintenance/                 # 维护文档
+│   ├── features/                   # 功能文档
+│   └── community/                  # 社区文档
+│
+├── data/                           # 📊 运行时数据
+│   ├── grafana/                    # Grafana数据
+│   ├── prometheus/                 # Prometheus数据
+│   ├── redis/                      # Redis数据
+│   └── logs/                       # 应用日志
+│
+└── tests/                          # 🧪 测试文件
+    └── performance/                # 性能测试
+```
 
-### 🤖 **Multi-Model Intelligence**
-- **7+ LLM Providers**: OpenAI GPT-4, Anthropic Claude, Cohere, Google Gemini, Baidu ERNIE, Moonshot, Zhipu GLM
-- **Consensus Scoring**: Advanced algorithms to measure agreement between models
-- **Role-Based Responses**: Assign expert roles to different models for specialized insights
-- **Chain-of-Thought**: Iterative refinement when consensus is low
+## 🚀 快速开始
 
-### 📊 **Enterprise Analytics**
-- **Real-time Monitoring**: Prometheus + Grafana dashboards
-- **Performance Analytics**: Response times, success rates, cost tracking
-- **Consensus Trends**: Historical analysis of model agreement patterns
-- **Cache Analytics**: Hit rates and optimization insights
-
-### 🔒 **Production Security**
-- **SSL/HTTPS**: Automatic certificate management (Let's Encrypt or self-signed)
-- **API Authentication**: Bearer token authentication
-- **Rate Limiting**: Configurable request throttling
-- **Input Validation**: Comprehensive security checks
-- **Audit Logging**: Complete request/response tracking
-
-### 🚀 **Smart Deployment**
-- **One-Command Setup**: `./smart-deploy.sh` handles everything automatically
-- **Environment Detection**: Auto-detects AWS, GCP, Azure, or local environments
-- **Intelligent SSL**: Automatic certificate generation and renewal
-- **Health Monitoring**: Built-in health checks and auto-recovery
-
-## 🚀 Quick Start
-
-### Option 1: One-Command Deployment (Recommended)
+### 方法一：一键部署 (推荐)
 
 ```bash
-# Clone and deploy in one go
-git clone https://github.com/your-username/cross-mind-consensus.git
+# 1. 克隆项目
+git clone https://github.com/your-repo/cross-mind-consensus.git
 cd cross-mind-consensus
-./smart-deploy.sh
+
+# 2. 配置环境变量 (至少需要一个API密钥)
+cp config/env.template .env
+# 编辑 .env 文件，添加你的API密钥
+
+# 3. 一键部署
+./deploy.sh
 ```
 
-**That's it!** Your system will be running at:
-- 🌐 **Main Dashboard**: https://localhost
-- 📚 **API Documentation**: https://localhost/docs
-- 📊 **Monitoring**: http://localhost:3000 (Grafana)
-
-### Option 2: Development Setup
+### 方法二：传统部署
 
 ```bash
-# Quick development environment
-./auto-setup.sh
-```
+# 1. 进入Docker配置目录
+cd config/docker
 
-### Option 3: Manual Setup
+# 2. 构建和启动服务
+docker-compose build
+docker-compose up -d
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/your-username/cross-mind-consensus.git
-cd cross-mind-consensus
-
-# 2. Configure environment
-cp env.template .env
-# Edit .env with your API keys (add at least one LLM provider)
-
-# 3. Generate SSL certificates
-./generate-ssl.sh
-
-# 4. Start services
-docker-compose up -d --build
-
-# 5. Access your system
-# Dashboard: https://localhost
-# API: https://localhost/docs
-```
-
-## 📖 Usage Examples
-
-### Basic Consensus Query
-
-```python
-import requests
-
-# Simple consensus query
-response = requests.post("https://localhost/llm/qa", 
-    headers={"Authorization": "Bearer your-api-key"},
-    json={
-        "question": "What are the best practices for machine learning?",
-        "roles": ["ML Expert", "Data Scientist", "Software Engineer"],
-        "model_ids": ["openai_gpt4", "anthropic_claude", "cohere_command"],
-        "method": "agreement"
-    }
-)
-
-result = response.json()
-print(f"Consensus Score: {result['agreement_score']}")
-print(f"Individual Scores: {result['individual_model_agreement']}")
-print(f"Verdict: {result['verdict']}")
-```
-
-### Advanced Chain-of-Thought
-
-```python
-# Multi-round refinement when consensus is low
-response = requests.post("https://localhost/llm/qa",
-    headers={"Authorization": "Bearer your-api-key"},
-    json={
-        "question": "Design a scalable microservices architecture",
-        "roles": ["System Architect", "DevOps Engineer", "Security Expert"],
-        "model_ids": ["openai_gpt4", "anthropic_claude", "google_gemini"],
-        "method": "chain",
-        "chain_depth": 3
-    }
-)
-```
-
-### Batch Processing
-
-```python
-# Process multiple questions efficiently
-questions = [
-    "What are the latest AI trends?",
-    "How to implement CI/CD pipelines?",
-    "Best practices for cloud security?"
-]
-
-response = requests.post("https://localhost/llm/batch",
-    headers={"Authorization": "Bearer your-api-key"},
-    json={
-        "requests": [
-            {
-                "question": q,
-                "roles": ["Expert"],
-                "model_ids": ["openai_gpt4", "anthropic_claude"],
-                "method": "agreement"
-            } for q in questions
-        ],
-        "parallel": True
-    }
-)
-```
-
-## 🏗️ System Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Cross-Mind Consensus System                  │
-├─────────────────────────────────────────────────────────────────┤
-│  🌐 Nginx (SSL/TLS, Load Balancing, Rate Limiting)             │
-├─────────────────────────────────────────────────────────────────┤
-│  📊 Streamlit Dashboard  │  🚀 FastAPI Backend  │  📈 Grafana   │
-│  (User Interface)        │  (Consensus Engine)  │  (Monitoring) │
-├─────────────────────────────────────────────────────────────────┤
-│  🔄 Redis Cache  │  📊 Prometheus  │  🗄️ Analytics Manager     │
-│  (Performance)   │  (Metrics)      │  (Data Science)           │
-├─────────────────────────────────────────────────────────────────┤
-│                    Multi-LLM Consensus Engine                   │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐│
-│  │ OpenAI GPT-4│ │Anthropic    │ │ Cohere      │ │ Google      ││
-│  │             │ │ Claude      │ │ Command     │ │ Gemini      ││
-│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘│
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐               │
-│  │ Baidu ERNIE │ │ Moonshot    │ │ Zhipu GLM   │               │
-│  └─────────────┘ └─────────────┘ └─────────────┘               │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## 📊 Performance Metrics
-
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Response Time** | 15-30s | 4-8s | **70% faster** ⚡ |
-| **Error Rate** | 25% | <5% | **80% reduction** 🛡️ |
-| **Concurrent Users** | 1-5 | 50+ | **10x scalability** 📈 |
-| **API Costs** | Baseline | -60~80% | **Massive savings** 💰 |
-| **Consensus Accuracy** | Single model | Multi-model | **Higher reliability** 🎯 |
-
-## 🔧 Configuration
-
-### Environment Variables
-
-```bash
-# API Keys (add at least one LLM provider)
-OPENAI_API_KEY=sk-your-openai-key-here
-ANTHROPIC_API_KEY=sk-ant-your-anthropic-key
-COHERE_API_KEY=your-cohere-key
-GOOGLE_API_KEY=your-google-api-key
-
-# Security
-BACKEND_API_KEYS=your-secure-api-key-1,your-secure-api-key-2
-REDIS_PASSWORD=your-secure-redis-password
-GRAFANA_ADMIN_PASSWORD=your-secure-grafana-password
-
-# Performance
-ENABLE_CACHING=true
-ENABLE_RATE_LIMITING=true
-ENABLE_ANALYTICS=true
-```
-
-### Supported LLM Models
-
-| Provider | Models | Features |
-|----------|--------|----------|
-| **OpenAI** | GPT-4, GPT-3.5-turbo | High accuracy, fast response |
-| **Anthropic** | Claude-3 Opus, Sonnet, Haiku | Detailed reasoning, safety |
-| **Cohere** | Command, Command-light | Cost-effective, good performance |
-| **Google** | Gemini Pro | Multimodal, reasoning |
-| **Baidu** | ERNIE Bot | Chinese language expertise |
-| **Moonshot** | Moonshot-v1 | Chinese LLM alternative |
-| **Zhipu** | GLM-4, GLM-3-turbo | Chinese language models |
-
-## 🛠️ Management & Operations
-
-### Smart Deployment Scripts
-
-```bash
-# Deploy everything intelligently
-./smart-deploy.sh
-
-# Development setup
-./auto-setup.sh
-
-# Complete cleanup
-./smart-uninstall.sh
-
-# Check status
+# 3. 检查服务状态
 docker-compose ps
 ```
 
-### Monitoring & Health Checks
+## 🏥 健康检查
 
 ```bash
-# Service status
-docker-compose ps
+# 运行完整的健康检查
+./health-check.sh
 
-# View logs
-docker-compose logs -f
-
-# Health check
-curl -k https://localhost/health
-
-# Performance metrics
-curl -k https://localhost/analytics/performance
+# 或者手动检查各个服务
+curl http://localhost:8000/health    # API健康检查
+curl http://localhost:8501           # Streamlit仪表板
+curl http://localhost:3000           # Grafana
+curl http://localhost:9090           # Prometheus
 ```
 
-### Access Points
+## 🌐 服务访问
 
-| Service | URL | Purpose |
-|---------|-----|---------|
-| **Main Dashboard** | https://localhost | User interface |
-| **API Documentation** | https://localhost/docs | Interactive API docs |
-| **Health Check** | https://localhost/health | System status |
-| **Grafana Monitoring** | http://localhost:3000 | Performance dashboards |
-| **Prometheus Metrics** | http://localhost:9090 | Raw metrics |
+部署成功后，可以通过以下地址访问各个服务：
 
-## 🧪 Testing
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| 🏠 主仪表板 | http://localhost | Nginx反向代理入口 |
+| 🔧 API文档 | http://localhost:8000/docs | FastAPI自动生成的API文档 |
+| ❤️ 健康检查 | http://localhost:8000/health | API健康状态检查 |
+| 📊 Streamlit | http://localhost:8501 | 交互式数据仪表板 |
+| 📈 Grafana | http://localhost:3000 | 监控仪表板 (admin/admin123) |
+| 📊 Prometheus | http://localhost:9090 | 指标收集和查询 |
+
+## 🛠️ 管理命令
 
 ```bash
-# Run all tests
-pytest tests/ -v
+# 查看服务状态
+docker-compose -f config/docker/docker-compose.yml ps
 
-# Performance testing
-locust -f tests/performance/load_test.py --host=https://localhost
+# 查看服务日志
+docker-compose -f config/docker/docker-compose.yml logs -f [service_name]
 
-# Security testing
-bandit -r backend/
-safety check
+# 重启特定服务
+docker-compose -f config/docker/docker-compose.yml restart [service_name]
+
+# 停止所有服务
+docker-compose -f config/docker/docker-compose.yml down
+
+# 重新构建并启动
+docker-compose -f config/docker/docker-compose.yml up -d --build
 ```
 
-## 📚 Documentation
+## ⚙️ 配置说明
 
-- 📖 **[Deployment Guide](DEPLOYMENT.md)** - Complete deployment instructions
-- 🛠️ **[System Management](SYSTEM_MANAGEMENT.md)** - Operations and maintenance
-- 🔒 **[Security Guide](SECURITY_FIXES.md)** - Security features and best practices
-- 🚀 **[Project Improvements](PROJECT_IMPROVEMENTS.md)** - Technical enhancements
-- 🔧 **[Code Refactoring](CODE_REFACTOR_PLAN.md)** - Development roadmap
+### API密钥配置
 
-## 🏆 Use Cases
-
-### 🤖 **AI Decision Support**
-- **Business Intelligence**: Multi-perspective market analysis
-- **Technical Architecture**: Consensus on system design decisions
-- **Risk Assessment**: Multiple expert opinions on potential risks
-- **Content Creation**: Collaborative content generation and review
-
-### 🎓 **Research & Development**
-- **Literature Review**: Consensus on research findings
-- **Hypothesis Testing**: Multiple AI perspectives on theories
-- **Data Analysis**: Consensus on data interpretation
-- **Code Review**: Multi-model code quality assessment
-
-### 💼 **Enterprise Applications**
-- **Customer Support**: Intelligent response generation
-- **Documentation**: Automated technical writing
-- **Compliance**: Multi-model regulatory analysis
-- **Training**: AI-powered educational content
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-### Development Setup
+在 `.env` 文件中配置至少一个LLM提供商的API密钥：
 
 ```bash
-# Clone and setup development environment
-git clone https://github.com/your-username/cross-mind-consensus.git
-cd cross-mind-consensus
+# OpenAI
+OPENAI_API_KEY=your_openai_key
 
-# Install development dependencies
-pip install -r requirements.txt
-pip install black isort flake8 mypy pytest
+# Anthropic Claude
+ANTHROPIC_API_KEY=your_anthropic_key
 
-# Run code formatting
-black backend/
-isort backend/
+# Cohere
+COHERE_API_KEY=your_cohere_key
 
-# Run tests
-pytest tests/ -v
+# Google
+GOOGLE_API_KEY=your_google_key
+
+# 其他配置...
 ```
 
-## 📄 License
+**注意**: 你只需要配置至少一个API密钥即可开始使用，不需要全部配置。
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### 自定义安装路径
 
-## 🙏 Acknowledgments
+如果你想自定义安装路径，可以使用：
 
-- **OpenAI** for GPT models
-- **Anthropic** for Claude models
-- **Cohere** for Command models
-- **Google** for Gemini models
-- **FastAPI** for the web framework
-- **Streamlit** for the dashboard
-- **Docker** for containerization
+```bash
+# 交互式配置安装路径
+./scripts/deployment/install-config.sh
 
-## 📞 Support
+# 使用预定义配置
+./scripts/deployment/smart-deploy.sh --use-config
+```
 
-- 📧 **Email**: support@crossmind-consensus.com
-- 💬 **Discord**: [Join our community](https://discord.gg/crossmind)
-- 📖 **Documentation**: [Full documentation](https://docs.crossmind-consensus.com)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/your-username/cross-mind-consensus/issues)
+## 📊 监控和告警
+
+系统内置了完整的监控解决方案：
+
+- **Prometheus**: 指标收集和存储
+- **Grafana**: 可视化仪表板和告警
+- **健康检查**: 自动化服务状态监控
+
+访问 Grafana (http://localhost:3000) 查看：
+- 系统性能指标
+- API响应时间
+- 错误率统计
+- 资源使用情况
+
+## 🔧 故障排除
+
+### 常见问题
+
+1. **端口冲突**: 确保端口 80, 443, 3000, 6379, 8000, 8501, 9090 未被占用
+2. **权限问题**: 确保Docker有足够权限访问项目目录
+3. **磁盘空间**: 确保有足够的磁盘空间 (建议至少10GB)
+4. **API密钥**: 确保至少配置了一个有效的LLM API密钥
+
+### 日志查看
+
+```bash
+# 查看所有服务日志
+docker-compose -f config/docker/docker-compose.yml logs
+
+# 查看特定服务日志
+docker-compose -f config/docker/docker-compose.yml logs api
+docker-compose -f config/docker/docker-compose.yml logs dashboard
+```
+
+## 🤝 贡献指南
+
+我们欢迎社区贡献！请查看 [docs/community/CONTRIBUTING.md](docs/community/CONTRIBUTING.md) 了解详细信息。
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+
+## 🆘 支持
+
+- 📖 查看 [docs/](docs/) 目录获取详细文档
+- 🐛 提交 Issue 报告问题
+- 💬 参与 Discussions 讨论
 
 ---
 
-**Ready to transform your AI decision-making?** 🚀
-
-```bash
-git clone https://github.com/your-username/cross-mind-consensus.git
-cd cross-mind-consensus
-./smart-deploy.sh
-```
-
-*Your enterprise-grade multi-LLM consensus system will be running in minutes!* ⚡ 
+**🎉 享受使用 Cross-Mind Consensus！** 

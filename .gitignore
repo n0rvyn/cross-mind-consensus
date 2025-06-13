@@ -134,8 +134,12 @@ redis-data/
 prometheus-data/
 grafana-data/
 
+# Data directories (restructured)
+data/
+config/docker/data/
+
 # Docker
-.dockerignore
+docker-compose.override.yml.bak
 
 # Temporary files
 *.tmp
@@ -153,6 +157,13 @@ ssl/
 *.pem
 *.key
 *.crt
+
+# Machine learning cache
+.cache/
+*.model
+*.pkl
+transformers_cache/
+sentence_transformers_cache/
 
 # Performance test results
 *.html

@@ -5,7 +5,10 @@ FROM python:3.11-slim as base
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    TRANSFORMERS_CACHE=/app/.cache/transformers \
+    SENTENCE_TRANSFORMERS_HOME=/app/.cache/sentence_transformers \
+    HF_HOME=/app/.cache/huggingface
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -27,10 +30,12 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY src/ ./src/
+COPY backend/ ./backend/
+COPY config/ ./config/
 
-# Create necessary directories
-RUN mkdir -p logs && \
+# Create necessary directories and cache directories
+RUN mkdir -p logs .cache/transformers .cache/sentence_transformers .cache/huggingface && \
     chown -R appuser:appuser /app
 
 # Switch to non-root user
@@ -50,7 +55,7 @@ CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port
 FROM base as production
 
 # Copy production config
-COPY production.env .env
+COPY config/production.env .env
 
 # Run with gunicorn for production
 CMD ["gunicorn", "backend.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
@@ -62,7 +67,7 @@ FROM base as development
 RUN pip install --no-cache-dir pytest pytest-asyncio pytest-cov black flake8 mypy
 
 # Copy development config
-COPY env.template .env
+COPY config/env.template .env
 
 # Run in development mode
-CMD ["python", "run.py", "--mode", "both", "--skip-checks"] 
+CMD ["python", "src/run.py", "--mode", "both", "--skip-checks"] 
