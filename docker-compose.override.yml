@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  redis:
+    volumes:
+      - ./data/redis:/data
+    
+  api:
+    volumes:
+      - ./data/logs:/app/logs
+      - ./.env:/app/.env:ro
+      
+  dashboard:
+    volumes:
+      - ./.env:/app/.env:ro
+      
+  prometheus:
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./data/prometheus:/prometheus
+      
+  grafana:
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+
+volumes:
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/norvyn/cross-mind-consensus/data/redis
+  prometheus_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/norvyn/cross-mind-consensus/data/prometheus
+  grafana_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/norvyn/cross-mind-consensus/data/grafana

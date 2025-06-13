@@ -80,7 +80,7 @@ cd cross-mind-consensus
 
 # 2. Configure environment
 cp env.template .env
-# Edit .env with your API keys (at minimum, add OPENAI_API_KEY)
+# Edit .env with your API keys (add at least one LLM provider)
 
 # 3. Generate SSL certificates
 ./generate-ssl.sh
@@ -199,7 +199,7 @@ response = requests.post("https://localhost/llm/batch",
 ### Environment Variables
 
 ```bash
-# Required API Keys (at minimum, add OPENAI_API_KEY)
+# API Keys (add at least one LLM provider)
 OPENAI_API_KEY=sk-your-openai-key-here
 ANTHROPIC_API_KEY=sk-ant-your-anthropic-key
 COHERE_API_KEY=your-cohere-key

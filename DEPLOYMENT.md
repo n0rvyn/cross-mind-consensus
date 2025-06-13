@@ -83,14 +83,17 @@ docker-compose ps
 
 ### Development Configuration
 
-**Required API Keys in `.env` file:**
+**API Keys in `.env` file (you need at least ONE):**
 ```env
-# Minimum required
+# Choose your preferred LLM provider(s)
 OPENAI_API_KEY=sk-your-openai-key-here
-
-# Optional for enhanced functionality
 ANTHROPIC_API_KEY=sk-ant-your-anthropic-key
 COHERE_API_KEY=your-cohere-key
+GOOGLE_API_KEY=your-google-api-key
+ERNIE_API_KEY=your-baidu-ernie-key
+ERNIE_SECRET_KEY=your-baidu-secret-key
+MOONSHOT_API_KEY=your-moonshot-key
+ZHIPU_API_KEY=your-zhipu-key
 ```
 
 **Development URLs:**

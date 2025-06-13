@@ -10,7 +10,13 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
+
+# Configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_NAME="cross-mind-consensus"
+DEFAULT_DATA_DIR=""
 
 # Print colored output
 print_status() {
@@ -30,9 +36,83 @@ print_error() {
 }
 
 print_header() {
-    echo "======================================"
-    echo "🤖 Cross-Mind Consensus Auto Setup"
-    echo "======================================"
+    echo -e "${PURPLE}"
+    echo "========================================"
+    echo "🤖 Cross-Mind Consensus Auto Setup v2.0"
+    echo "========================================"
+    echo -e "${NC}"
+}
+
+# Detect the best data directory for installation
+detect_data_directory() {
+    print_status "Detecting optimal data directory..."
+    
+    # Check for mounted data directories with sufficient space
+    local candidates=(
+        "/home/$(whoami)/data"
+        "/data"
+        "/opt/data"
+        "/var/lib/docker-data"
+        "$(pwd)"
+    )
+    
+    local best_dir=""
+    local max_space=0
+    
+    for dir in "${candidates[@]}"; do
+        if [ -d "$dir" ] && [ -w "$dir" ]; then
+            # Get available space in GB
+            local space=$(df "$dir" 2>/dev/null | tail -1 | awk '{print int($4/1024/1024)}')
+            print_status "Found writable directory: $dir (${space}GB available)"
+            
+            if [ "$space" -gt "$max_space" ]; then
+                max_space=$space
+                best_dir=$dir
+            fi
+        fi
+    done
+    
+    # If we found a good candidate with more than 10GB, use it
+    if [ -n "$best_dir" ] && [ "$max_space" -gt 10 ]; then
+        DEFAULT_DATA_DIR="$best_dir"
+        print_success "Selected data directory: $DEFAULT_DATA_DIR (${max_space}GB available)"
+    else
+        DEFAULT_DATA_DIR="$(pwd)"
+        print_warning "Using current directory: $DEFAULT_DATA_DIR"
+    fi
+    
+    export DATA_DIR="${DATA_DIR:-$DEFAULT_DATA_DIR}"
+}
+
+# Setup working directory
+setup_working_directory() {
+    print_status "Setting up working directory..."
+    
+    # If we're not already in the data directory, create and copy project
+    if [ "$DATA_DIR" != "$(pwd)" ] && [ "$DATA_DIR" != "$SCRIPT_DIR" ]; then
+        local project_dir="$DATA_DIR/$PROJECT_NAME"
+        
+        if [ ! -d "$project_dir" ]; then
+            print_status "Creating project directory: $project_dir"
+            mkdir -p "$project_dir"
+            
+            print_status "Copying project files to data directory..."
+            cp -r "$SCRIPT_DIR/"* "$project_dir/"
+            
+            # Update working directory
+            cd "$project_dir"
+            print_success "Working directory set to: $(pwd)"
+        else
+            cd "$project_dir"
+            print_success "Using existing project directory: $(pwd)"
+        fi
+    else
+        print_success "Using current directory: $(pwd)"
+    fi
+    
+    # Create data subdirectories
+    mkdir -p data/logs data/redis data/grafana data/prometheus
+    print_success "Created data subdirectories"
 }
 
 # Check if command exists
@@ -91,14 +171,24 @@ setup_environment() {
     if [ ! -f .env ]; then
         if [ -f env.template ]; then
             cp env.template .env
+            
+            # Add data directory configuration to .env
+            echo "" >> .env
+            echo "# Data Directory Configuration" >> .env
+            echo "DATA_DIR=$(pwd)/data" >> .env
+            echo "LOGS_DIR=$(pwd)/data/logs" >> .env
+            
             print_success "Created .env file from template"
             print_warning "⚠️  IMPORTANT: You need to add your API keys to the .env file!"
             echo ""
-            echo "Required API keys:"
-            echo "- OPENAI_API_KEY (minimum required)"
-            echo "- ANTHROPIC_API_KEY (optional)"
-            echo "- COHERE_API_KEY (optional)"
-            echo "- GOOGLE_API_KEY (optional)"
+            echo "Available API keys (you need at least ONE):"
+            echo "- OPENAI_API_KEY (GPT-4, GPT-3.5)"
+            echo "- ANTHROPIC_API_KEY (Claude)"
+            echo "- COHERE_API_KEY (Command)"
+            echo "- GOOGLE_API_KEY (Gemini)"
+            echo "- ERNIE_API_KEY + ERNIE_SECRET_KEY (Baidu)"
+            echo "- MOONSHOT_API_KEY (Moonshot)"
+            echo "- ZHIPU_API_KEY (GLM)"
             echo ""
             read -p "Do you want to edit the .env file now? (y/N): " edit_env
             if [[ $edit_env =~ ^[Yy]$ ]]; then
@@ -135,6 +225,63 @@ setup_ssl_certificates() {
     else
         print_success "SSL certificates already exist"
     fi
+}
+
+# Update Docker Compose to use data paths
+update_docker_compose() {
+    print_status "Updating Docker Compose configuration for data paths..."
+    
+    # Create a docker-compose override file for data paths
+    cat > docker-compose.override.yml << EOF
+version: '3.8'
+
+services:
+  redis:
+    volumes:
+      - ./data/redis:/data
+    
+  api:
+    volumes:
+      - ./data/logs:/app/logs
+      - ./.env:/app/.env:ro
+      
+  dashboard:
+    volumes:
+      - ./.env:/app/.env:ro
+      
+  prometheus:
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./data/prometheus:/prometheus
+      
+  grafana:
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+
+volumes:
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: $(pwd)/data/redis
+  prometheus_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: $(pwd)/data/prometheus
+  grafana_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: $(pwd)/data/grafana
+EOF
+    
+    print_success "Created Docker Compose override for data paths"
 }
 
 # Check if nginx.conf exists
@@ -196,7 +343,7 @@ wait_for_services() {
     print_warning "Services may still be starting. Check with: docker-compose ps"
 }
 
-# Display service URLs
+# Display service URLs and data paths
 show_service_urls() {
     echo ""
     print_success "🎉 Setup complete! Your services are running:"
@@ -208,11 +355,20 @@ show_service_urls() {
     echo "   • Grafana:        http://localhost:3000 (admin/admin123)"
     echo "   • Prometheus:     http://localhost:9090"
     echo ""
+    echo "📁 Data Locations:"
+    echo "   • Project Dir:    $(pwd)"
+    echo "   • Data Dir:       $(pwd)/data"
+    echo "   • Logs:           $(pwd)/data/logs"
+    echo "   • Redis Data:     $(pwd)/data/redis"
+    echo "   • Grafana Data:   $(pwd)/data/grafana"
+    echo "   • Prometheus:     $(pwd)/data/prometheus"
+    echo ""
     echo "📋 Useful Commands:"
     echo "   • View logs:      docker-compose logs -f"
     echo "   • Stop services:  docker-compose down"
     echo "   • Restart:        docker-compose restart"
     echo "   • Status:         docker-compose ps"
+    echo "   • Data usage:     du -sh $(pwd)/data"
     echo ""
     print_warning "⚠️  Note: You'll see a security warning for HTTPS (self-signed certificate)"
     echo "   Click 'Advanced' → 'Proceed to localhost' in your browser"
@@ -222,9 +378,23 @@ show_service_urls() {
 # Check API keys in .env file
 check_api_keys() {
     if [ -f .env ]; then
-        if ! grep -q "OPENAI_API_KEY=sk-" .env; then
-            print_warning "⚠️  OPENAI_API_KEY not configured in .env file"
-            print_warning "   The system will have limited functionality without API keys"
+        local has_api_key=false
+        
+        # Check for any valid API key
+        if grep -q "OPENAI_API_KEY=sk-" .env || \
+           grep -q "ANTHROPIC_API_KEY=sk-ant-" .env || \
+           grep -q "COHERE_API_KEY=" .env | grep -v "=your-" || \
+           grep -q "GOOGLE_API_KEY=" .env | grep -v "=your-" || \
+           grep -q "ERNIE_API_KEY=" .env | grep -v "=your-" || \
+           grep -q "MOONSHOT_API_KEY=" .env | grep -v "=your-" || \
+           grep -q "ZHIPU_API_KEY=" .env | grep -v "=your-"; then
+            has_api_key=true
+        fi
+        
+        if [ "$has_api_key" = false ]; then
+            print_warning "⚠️  No valid API keys configured in .env file"
+            print_warning "   The system needs at least one LLM provider API key to function"
+            print_warning "   Supported providers: OpenAI, Anthropic, Cohere, Google, Baidu, Moonshot, Zhipu"
         fi
     fi
 }
@@ -234,10 +404,13 @@ main() {
     print_header
     
     # Run all setup steps
+    detect_data_directory
+    setup_working_directory
     check_prerequisites
     check_docker_running
     setup_environment
     setup_ssl_certificates
+    update_docker_compose
     setup_nginx_config
     check_api_keys
     stop_existing_containers
@@ -246,6 +419,11 @@ main() {
     show_service_urls
     
     print_success "✅ Auto-setup completed successfully!"
+    echo ""
+    echo "🎯 Next Steps:"
+    echo "1. Configure API keys in .env file"
+    echo "2. Access the dashboard at https://localhost"
+    echo "3. Check the API documentation at https://localhost/docs"
 }
 
 # Handle script interruption

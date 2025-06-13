@@ -17,6 +17,7 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_NAME="cross-mind-consensus"
 DEFAULT_DOMAIN="localhost"
+DEFAULT_DATA_DIR=""
 
 # Print functions
 print_banner() {
@@ -74,6 +75,78 @@ detect_environment() {
     fi
     
     export ENV_TYPE
+}
+
+# Detect the best data directory for installation
+detect_data_directory() {
+    print_step "Detecting optimal data directory..."
+    
+    # Check for mounted data directories with sufficient space
+    local candidates=(
+        "/home/$(whoami)/data"
+        "/data"
+        "/opt/data"
+        "/var/lib/docker-data"
+        "$(pwd)"
+    )
+    
+    local best_dir=""
+    local max_space=0
+    
+    for dir in "${candidates[@]}"; do
+        if [ -d "$dir" ] && [ -w "$dir" ]; then
+            # Get available space in GB
+            local space=$(df "$dir" 2>/dev/null | tail -1 | awk '{print int($4/1024/1024)}')
+            print_info "Found writable directory: $dir (${space}GB available)"
+            
+            if [ "$space" -gt "$max_space" ]; then
+                max_space=$space
+                best_dir=$dir
+            fi
+        fi
+    done
+    
+    # If we found a good candidate with more than 10GB, use it
+    if [ -n "$best_dir" ] && [ "$max_space" -gt 10 ]; then
+        DEFAULT_DATA_DIR="$best_dir"
+        print_success "Selected data directory: $DEFAULT_DATA_DIR (${max_space}GB available)"
+    else
+        DEFAULT_DATA_DIR="$(pwd)"
+        print_warning "Using current directory: $DEFAULT_DATA_DIR"
+    fi
+    
+    export DATA_DIR="${DATA_DIR:-$DEFAULT_DATA_DIR}"
+}
+
+# Setup working directory
+setup_working_directory() {
+    print_step "Setting up working directory..."
+    
+    # If we're not already in the data directory, create and copy project
+    if [ "$DATA_DIR" != "$(pwd)" ] && [ "$DATA_DIR" != "$SCRIPT_DIR" ]; then
+        local project_dir="$DATA_DIR/$PROJECT_NAME"
+        
+        if [ ! -d "$project_dir" ]; then
+            print_info "Creating project directory: $project_dir"
+            mkdir -p "$project_dir"
+            
+            print_info "Copying project files to data directory..."
+            cp -r "$SCRIPT_DIR/"* "$project_dir/"
+            
+            # Update working directory
+            cd "$project_dir"
+            print_success "Working directory set to: $(pwd)"
+        else
+            cd "$project_dir"
+            print_success "Using existing project directory: $(pwd)"
+        fi
+    else
+        print_success "Using current directory: $(pwd)"
+    fi
+    
+    # Create data subdirectories
+    mkdir -p data/logs data/redis data/grafana data/prometheus
+    print_success "Created data subdirectories"
 }
 
 # Auto-detect domain
@@ -441,6 +514,8 @@ main() {
     print_banner
     
     detect_environment
+    detect_data_directory
+    setup_working_directory
     detect_domain
     configure_domain
     check_prerequisites

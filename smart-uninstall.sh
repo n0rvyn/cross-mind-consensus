@@ -138,11 +138,34 @@ cleanup_ssl_and_config() {
     print_success "Configuration files cleaned up"
 }
 
+# Clean up data directories
+cleanup_data_directories() {
+    print_status "Cleaning up data directories..."
+    
+    # Data directories to clean
+    data_dirs=(
+        "data/logs"
+        "data/redis"
+        "data/grafana"
+        "data/prometheus"
+        "data"
+    )
+    
+    for dir in "${data_dirs[@]}"; do
+        if [ -d "$dir" ]; then
+            print_status "Removing data directory: $dir"
+            rm -rf "$dir"
+        fi
+    done
+    
+    print_success "Data directories cleaned up"
+}
+
 # Clean up logs and temporary files
 cleanup_logs_and_temp() {
     print_status "Cleaning up logs and temporary files..."
     
-    # Remove log files
+    # Remove log files (both old and new locations)
     if [ -d "logs" ]; then
         print_status "Removing log files..."
         rm -rf logs/
@@ -307,6 +330,7 @@ show_cleanup_summary() {
     echo "✅ Docker images: Removed"
     echo "✅ SSL certificates: Removed"
     echo "✅ Configuration files: Removed"
+    echo "✅ Data directories: Removed"
     echo "✅ Log files: Removed"
     echo "✅ Temporary files: Removed"
     echo "✅ Network configurations: Cleaned"
@@ -395,6 +419,7 @@ main() {
     cleanup_volumes
     cleanup_images "$AGGRESSIVE"
     cleanup_ssl_and_config
+    cleanup_data_directories
     cleanup_logs_and_temp
     cleanup_env_files
     cleanup_python_env
