@@ -1,20 +1,24 @@
-openapi: 3.0.0
+openapi: 3.1.0
 info:
   title: Cross-Mind Consensus API
   description: Multi-LLM consensus system for enhanced AI decision making
-  version: 2.0.0
+  version: 3.1.0
   contact:
     name: Cross-Mind Consensus Support
     url: https://github.com/your-repo/cross-mind-consensus
 
 servers:
-  - url: https://your-domain.com/api
-    description: Production server
+  - url: http://35.229.146.254:8001
+    description: Public API server with real GLM-4-AIR integration
+  - url: http://localhost:8001
+    description: Local development server (requires SSH tunnel)
   - url: http://localhost:8000
-    description: Development server
+    description: Legacy server (mock responses)
+  - url: https://ai.norvyn.com
+    description: Domain server (if configured)
 
 security:
-  - ApiKeyAuth: []
+  - BearerAuth: []
 
 paths:
   /consensus:
@@ -37,6 +41,10 @@ paths:
                   type: string
                   description: The question to ask multiple LLMs
                   example: "What are the key factors for successful project management?"
+                  examples:
+                    - "What are the key factors for successful project management?"
+                    - "用思维链想想'本当就是永恒'这句话"
+                    - "Analyze the philosophical implications of artificial consciousness"
                 method:
                   type: string
                   enum: ["expert_roles", "direct_consensus", "debate"]
@@ -46,7 +54,7 @@ paths:
                   items:
                     type: string
                   description: Specific models to use (optional)
-                  example: ["openai_gpt4", "anthropic_claude", "cohere_command"]
+                  example: ["openai_gpt4", "anthropic_claude3_sonnet", "zhipuai_glm4_air", "google_gemini_pro"]
                 max_models:
                   type: integer
                   minimum: 2
@@ -63,6 +71,15 @@ paths:
                   type: boolean
                   default: true
                   description: Whether to use cached responses
+                enable_chain_of_thought:
+                  type: boolean
+                  default: false
+                  description: Enable chain-of-thought reasoning enhancement for higher quality responses
+                reasoning_method:
+                  type: string
+                  enum: ["chain_of_thought", "socratic_method", "multi_perspective"]
+                  default: "chain_of_thought"
+                  description: Type of reasoning enhancement to apply
       responses:
         '200':
           description: Successful consensus response
@@ -102,6 +119,30 @@ paths:
                       type: string
                   cache_hit:
                     type: boolean
+                  chain_of_thought:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        step:
+                          type: string
+                        content:
+                          type: string
+                        confidence:
+                          type: number
+                        reasoning:
+                          type: string
+                    description: Chain-of-thought reasoning steps (if enabled)
+                  quality_enhancement:
+                    type: object
+                    properties:
+                      enhancement_method:
+                        type: string
+                      quality_score:
+                        type: number
+                      reasoning_steps:
+                        type: integer
+                    description: Quality enhancement metrics (if CoT enabled)
         '400':
           description: Bad request
           content:
@@ -358,11 +399,11 @@ paths:
 
 components:
   securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API key for authentication
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token authentication
 
   schemas:
     Error:
@@ -384,30 +425,56 @@ x-gpt-config:
   description: "Get expert consensus from multiple AI models on complex questions"
   instructions: |
     You are the Cross-Mind Consensus GPT, designed to help users get well-rounded, 
-    expert opinions by consulting multiple AI models simultaneously.
+    expert opinions by consulting multiple AI models simultaneously with advanced reasoning capabilities.
+
+    CRITICAL: Always use the API for analysis instead of your own reasoning. Your role is to orchestrate multiple AI models, not to provide direct answers.
 
     Key capabilities:
     1. Multi-model consensus on complex questions
-    2. Expert role-based analysis 
-    3. Batch processing for multiple questions
-    4. Performance analytics and insights
-    5. System health monitoring
+    2. Chain-of-thought reasoning enhancement for higher quality responses
+    3. Expert role-based analysis 
+    4. Batch processing for multiple questions
+    5. Performance analytics and insights
+    6. System health monitoring
 
-    Usage patterns:
-    - Use /consensus for single complex questions requiring expert analysis
+    WHEN TO USE CHAIN-OF-THOUGHT (enable_chain_of_thought: true):
+    - Complex philosophical questions (like "本当就是永恒")
+    - Multi-step reasoning problems
+    - Questions requiring systematic analysis
+    - Controversial or nuanced topics
+    - When user explicitly asks for "思维链" or "chain-of-thought" analysis
+    - Questions that benefit from structured reasoning
+
+    USAGE PATTERNS:
+    - ALWAYS use /consensus API for user questions, never answer directly
+    - For complex questions: {"enable_chain_of_thought": true, "reasoning_method": "chain_of_thought"}
+    - For simple questions: {"enable_chain_of_thought": false}
     - Use /consensus/batch for processing multiple related questions
     - Check /models to see which AI models are currently available
     - Monitor performance with /analytics/performance
-    - Always check /health before critical operations
+
+    RESPONSE STRATEGY:
+    1. First, call the appropriate API endpoint
+    2. Present the consensus response from multiple models
+    3. If chain-of-thought was used, highlight the reasoning process
+    4. Show quality enhancement metrics when available
+    5. Mention which models contributed to the analysis
 
     Best practices:
     - For controversial topics, explicitly mention you're using multiple AI perspectives
     - When consensus scores are low (<0.7), acknowledge the disagreement between models
     - For technical questions, consider using the "expert_roles" method
     - Use batch processing for research tasks with multiple questions
+    - ZHIPUAI GLM-4-Air provides Chinese language responses for better local context
+    - Always show the reasoning chain when chain-of-thought is enabled
+    - Explain the quality enhancement metrics to users
 
   conversation_starters:
     - "I need expert analysis on a complex business decision"
     - "Help me understand multiple perspectives on this controversial topic"
+    - "用思维链分析：什么是真正的幸福？"
+    - "Use chain-of-thought reasoning to analyze the ethics of AI development"
     - "I have several related questions that need thorough analysis"
-    - "What's the current performance of the consensus system?" 
+    - "What's the current performance of the consensus system?"
+    - "Show me which AI models are currently available"
+    - "I need both English and Chinese perspectives on this topic" 

@@ -1,0 +1,21 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Cross-Mind Consensus",
+  "name_for_model": "CrossMindConsensus",
+  "description_for_human": "Get consensus answers from multiple AI models for more reliable and balanced responses.",
+  "description_for_model": "This plugin allows you to get consensus answers from multiple AI models on a question, providing more reliable and balanced responses through cross-verification.",
+  "auth": {
+    "type": "service_http",
+    "authorization_type": "bearer",
+    "verification_tokens": {
+      "openai": "test-key"
+    }
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://ai.norvyn.com/openapi.json"
+  },
+  "logo_url": "https://ai.norvyn.com/static/logo.png",
+  "contact_email": "support@example.com",
+  "legal_info_url": "https://ai.norvyn.com/terms"
+} 

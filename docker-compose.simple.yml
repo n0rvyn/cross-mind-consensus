@@ -1,0 +1,83 @@
+version: '3'
+
+services:
+  # NGINX Reverse Proxy
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: consensus-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+      - dashboard
+      
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: consensus-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Simple API container using Python image
+  api:
+    image: python:3.11-slim
+    container_name: consensus-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: >
+      bash -c "pip install -r requirements-slim.txt && 
+              python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ENABLE_CACHING=true
+      - ENABLE_ANALYTICS=false
+      - ENABLE_RATE_LIMITING=false
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # Dashboard using Python image
+  dashboard:
+    image: python:3.11-slim
+    container_name: consensus-dashboard
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: >
+      bash -c "pip install -r requirements-slim.txt && 
+              streamlit run src/simple_dashboard.py --server.port 8501 --server.address 0.0.0.0"
+    environment:
+      - API_URL=http://api:8000
+    depends_on:
+      - api
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: consensus-network
+    driver: bridge 

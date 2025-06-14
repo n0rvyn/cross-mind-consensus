@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: GPTClientConfig
+
+# Cross-Mind Consensus API Configuration
+api:
+  # Production API endpoint
+  baseUrl: "https://ai.norvyn.com"
+  
+  # API key for authentication (should be one of the keys in BACKEND_API_KEYS)
+  apiKey: "test-key"
+  
+  # Default request parameters
+  defaults:
+    method: "expert_roles"
+    maxModels: 5
+    temperature: 0.7
+    enableCaching: true
+    
+  # Request timeouts (in seconds)
+  timeouts:
+    request: 30
+    connection: 5
+    
+  # Retry configuration
+  retry:
+    maxRetries: 3
+    backoffFactor: 2
+    statusForcelist: [429, 500, 502, 503, 504]
+    
+# GPT Plugin Configuration
+plugin:
+  name: "Cross-Mind Consensus"
+  version: "1.0.0"
+  description: "Multi-LLM consensus system for enhanced AI decision making"
+  logo: "https://ai.norvyn.com/static/logo.png"
+  contactEmail: "support@example.com"
+  
+  # OpenAPI specification location
+  openApiUrl: "https://ai.norvyn.com/openapi.json"
+  
+  # Authentication settings for the plugin
+  auth:
+    type: "service_http"
+    authorizationType: "bearer"
+    
+  # Legal information
+  legal:
+    termsOfServiceUrl: "https://ai.norvyn.com/terms"
+    privacyPolicyUrl: "https://ai.norvyn.com/privacy" 
